@@ -61,10 +61,10 @@ def judge_node(state: State) -> dict[str, Any]:
     """Run judge agent to synthesize all perspectives."""
     response = judge_agent.run(state)
     return {
-        "final_decision": response.get("final_decision"),
-        "decision_reasoning": response.get("decision_reasoning"),
-        "final_confidence": response.get("final_confidence"),
-        "judge_response": response.get("response")
+        "final_decision": response.get("final_decision", "Analysis complete"),
+        "decision_reasoning": response.get("decision_reasoning", "Decision process finished"),
+        "final_confidence": response.get("final_confidence", 0.0),
+        "judge_response": response.get("response", "")
     }
 
 
