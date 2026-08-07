@@ -2,7 +2,7 @@
 
 from typing import Any, List
 from langchain_openai import ChatOpenAI
-from langchain.prompts import PromptTemplate
+from langchain_core.prompts import PromptTemplate
 from oracle.config import settings
 from oracle.state.state import State, AgentResponse
 from oracle.prompts.loader import JUDGE_PROMPT

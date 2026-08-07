@@ -5,7 +5,7 @@ Loads environment variables via python-dotenv and exposes a Pydantic
 and in the `ai/` folder (where environments and venv are kept).
 """
 from dotenv import load_dotenv
-from pydantic import BaseSettings
+from pydantic_settings import BaseSettings
 import os
 
 # Load project-level .env and ai/.env (ai folder preferred for developer venv)
