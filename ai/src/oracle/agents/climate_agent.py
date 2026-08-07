@@ -1,28 +1,70 @@
-"""Minimal climate agent implementation."""
+"""Climate Agent for analyzing climate and environmental impact."""
 
-from typing import Any
-
-from oracle.state.state import State
+from typing import Any, Optional
+from langchain_openai import ChatOpenAI
+from langchain.prompts import PromptTemplate
+from oracle.config import settings
+from oracle.state.state import State, AgentResponse
+from oracle.prompts.loader import CLIMATE_PROMPT
 
 
 class ClimateAgent:
-    """Climate-focused agent that reads state and returns a response.
-
-    This is intentionally minimal and does not implement RAG, memory, or
-    orchestration. It only consumes the current state and returns a simple,
-    structured response for future integration into the graph.
-    """
+    """Climate-focused agent that analyzes environmental impact."""
 
     def __init__(self) -> None:
         self.name = "climate"
+        self.model = ChatOpenAI(
+            api_key=settings.OPENAI_API_KEY,
+            model="gpt-4-turbo",
+            temperature=0.7
+        ) if settings.OPENAI_API_KEY else None
+        
+        self.prompt_template = PromptTemplate(
+            input_variables=["problem"],
+            template=CLIMATE_PROMPT
+        )
 
     def run(self, state: State) -> dict[str, Any]:
         """Return a structured climate analysis response from the given state."""
-        prompt = state.user_input.strip() or "No input provided"
-        return {
-            "agent": self.name,
-            "response": f"Climate analysis: {prompt}",
-        }
+        problem = state.problem_description or state.user_input or "No input provided"
+        
+        if not self.model:
+            return {
+                "agent": self.name,
+                "response": "Climate Agent: API key not configured",
+                "climate_analysis": AgentResponse(
+                    agent_name="Climate Agent",
+                    analysis="API key not configured",
+                    confidence=0.0
+                )
+            }
+        
+        try:
+            prompt = self.prompt_template.format(problem=problem)
+            response = self.model.invoke(prompt).content
+            
+            analysis = AgentResponse(
+                agent_name="Climate Agent",
+                analysis=response.strip(),
+                confidence=0.85,
+                reasoning="Analysis based on climate impact assessment"
+            )
+            
+            return {
+                "agent": self.name,
+                "response": response.strip(),
+                "climate_analysis": analysis
+            }
+        except Exception as e:
+            return {
+                "agent": self.name,
+                "response": f"Error in climate analysis: {str(e)}",
+                "climate_analysis": AgentResponse(
+                    agent_name="Climate Agent",
+                    analysis=f"Error: {str(e)}",
+                    confidence=0.0
+                )
+            }
 
 
 

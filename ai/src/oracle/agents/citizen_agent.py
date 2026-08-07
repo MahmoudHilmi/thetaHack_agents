@@ -1,6 +1,67 @@
-"""Placeholder for Citizen agent implementation."""
+"""Citizen Agent for representing citizen perspective."""
+
+from typing import Any
+from langchain_openai import ChatOpenAI
+from langchain.prompts import PromptTemplate
+from oracle.config import settings
+from oracle.state.state import State, AgentResponse
+from oracle.prompts.loader import CITIZEN_PROMPT
 
 
 class CitizenAgent:
-    def __init__(self):
-        pass
+    """Represents citizen perspective and public opinion."""
+
+    def __init__(self) -> None:
+        self.name = "citizen"
+        self.model = ChatOpenAI(
+            api_key=settings.OPENAI_API_KEY,
+            model="gpt-4-turbo",
+            temperature=0.7
+        ) if settings.OPENAI_API_KEY else None
+        
+        self.prompt_template = PromptTemplate(
+            input_variables=["problem"],
+            template=CITIZEN_PROMPT
+        )
+
+    def run(self, state: State) -> dict[str, Any]:
+        """Return citizen perspective analysis."""
+        problem = state.problem_description or state.user_input or "No input provided"
+        
+        if not self.model:
+            return {
+                "agent": self.name,
+                "response": "Citizen Agent: API key not configured",
+                "citizen_perspective": AgentResponse(
+                    agent_name="Citizen Agent",
+                    analysis="API key not configured",
+                    confidence=0.0
+                )
+            }
+        
+        try:
+            prompt = self.prompt_template.format(problem=problem)
+            response = self.model.invoke(prompt).content
+            
+            analysis = AgentResponse(
+                agent_name="Citizen Agent",
+                analysis=response.strip(),
+                confidence=0.80,
+                reasoning="Analysis based on citizen perspective assessment"
+            )
+            
+            return {
+                "agent": self.name,
+                "response": response.strip(),
+                "citizen_perspective": analysis
+            }
+        except Exception as e:
+            return {
+                "agent": self.name,
+                "response": f"Error in citizen perspective analysis: {str(e)}",
+                "citizen_perspective": AgentResponse(
+                    agent_name="Citizen Agent",
+                    analysis=f"Error: {str(e)}",
+                    confidence=0.0
+                )
+            }
