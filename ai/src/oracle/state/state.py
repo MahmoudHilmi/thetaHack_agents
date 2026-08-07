@@ -7,8 +7,10 @@ from pydantic import BaseModel
 
 
 class State(BaseModel):
-    """Global runtime state placeholder.
+    """Minimal runtime state for the initial agent scaffold.
 
-    Extend this model with the actual state fields when implementing business logic.
+    The field is intentionally simple so agents can receive a single input string
+    and return a structured response without introducing orchestration logic.
     """
-    pass
+
+    user_input: str = ""
