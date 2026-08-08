@@ -11,6 +11,7 @@ except ImportError:
 
 
 API_URL = "http://127.0.0.1:8000/decide"
+REQUEST_TIMEOUT = 300.0
 
 
 def post_decision(problem: str, user_input: str) -> dict:
@@ -23,13 +24,13 @@ def post_decision(problem: str, user_input: str) -> dict:
 
     try:
         if "httpx" in sys.modules:
-            response = httpx.post(API_URL, json=payload, headers=headers, timeout=30.0)
+            response = httpx.post(API_URL, json=payload, headers=headers, timeout=REQUEST_TIMEOUT)
             response.raise_for_status()
             return response.json()
         else:
             data = json.dumps(payload).encode("utf-8")
             req = request.Request(API_URL, data=data, headers=headers, method="POST")
-            with request.urlopen(req, timeout=30) as resp:
+            with request.urlopen(req, timeout=REQUEST_TIMEOUT) as resp:
                 return json.loads(resp.read().decode("utf-8"))
     except Exception as exc:
         return {"error": str(exc)}
