@@ -1,9 +1,8 @@
 """Ethics Agent for analyzing ethical implications."""
 
 from typing import Any
-from langchain_openai import ChatOpenAI
 from langchain_core.prompts import PromptTemplate
-from oracle.config import settings
+from oracle.config import get_chat_model, settings
 from oracle.state.state import State, AgentResponse
 from oracle.prompts.loader import ETHICS_PROMPT
 
@@ -13,11 +12,10 @@ class EthicsAgent:
 
     def __init__(self) -> None:
         self.name = "ethics"
-        self.model = ChatOpenAI(
-            api_key=settings.OPENAI_API_KEY,
+        self.model = get_chat_model(
             model="gpt-4-turbo",
             temperature=0.7
-        ) if settings.OPENAI_API_KEY else None
+        )
         
         self.prompt_template = PromptTemplate(
             input_variables=["problem"],

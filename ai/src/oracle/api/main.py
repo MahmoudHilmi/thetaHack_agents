@@ -43,7 +43,7 @@ async def health() -> dict:
     """Health-check endpoint for production readiness monitoring."""
     return {
         "status": "ok",
-        "api_configured": bool(settings.OPENAI_API_KEY),
+        "api_configured": bool(settings.OPENAI_API_KEY or settings.OPENROUTER_API_KEY),
         "graph_ready": graph is not None
     }
 
@@ -53,7 +53,7 @@ async def root() -> dict:
     return {
         "service": "ORACLE",
         "version": "0.1.0",
-        "ready": bool(settings.OPENAI_API_KEY) and graph is not None
+        "ready": bool(settings.OPENAI_API_KEY or settings.OPENROUTER_API_KEY) and graph is not None
     }
 
 
@@ -65,10 +65,10 @@ async def make_decision(request: DecisionRequest) -> DecisionResponse:
     Runs all domain agents (Climate, Economy, Health, Citizen, Ethics)
     in parallel, then Judge Agent synthesizes into final decision.
     """
-    if not settings.OPENAI_API_KEY:
+    if not (settings.OPENAI_API_KEY or settings.OPENROUTER_API_KEY):
         raise HTTPException(
             status_code=503,
-            detail="OPENAI_API_KEY not configured"
+            detail="OPENAI_API_KEY or OPENROUTER_API_KEY not configured"
         )
     
     if not graph:
