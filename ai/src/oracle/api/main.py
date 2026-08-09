@@ -1,14 +1,23 @@
+import logging
+
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
-from oracle.config import settings
+from oracle.config import get_decision_memory_database_url, settings
 from oracle.graph.graph import build_graph
+from oracle.memory import DecisionMemory
 from oracle.state.state import State
+
+logger = logging.getLogger(__name__)
 
 
 class DecisionRequest(BaseModel):
     """Request body for decision making."""
     problem_description: str = Field(..., description="The problem to analyze")
     user_input: str = Field(default="", description="Additional context")
+    memory_scope: str = Field(
+        default="default", min_length=1, max_length=100,
+        description="Isolation scope for prior decision memory",
+    )
 
 
 class DecisionResponse(BaseModel):
@@ -21,11 +30,13 @@ class DecisionResponse(BaseModel):
     health_analysis: str = ""
     citizen_perspective: str = ""
     ethics_evaluation: str = ""
+    memory_matches: int = 0
     status: str = "success"
 
 
 app = FastAPI(title="ORACLE", version="0.1.0")
 graph = None
+decision_memory = DecisionMemory(get_decision_memory_database_url())
 
 
 @app.on_event("startup")
@@ -33,9 +44,10 @@ async def startup_event():
     """Initialize graph on startup."""
     global graph
     try:
+        decision_memory.initialize()
         graph = build_graph()
     except Exception as e:
-        print(f"Warning: Could not initialize graph: {e}")
+        logger.exception("Could not initialize ORACLE graph")
 
 
 @app.get("/health")
@@ -44,7 +56,8 @@ async def health() -> dict:
     return {
         "status": "ok",
         "api_configured": bool(settings.OPENAI_API_KEY or settings.OPENROUTER_API_KEY),
-        "graph_ready": graph is not None
+        "graph_ready": graph is not None,
+        "memory_ready": decision_memory.is_ready(),
     }
 
 
@@ -78,10 +91,23 @@ async def make_decision(request: DecisionRequest) -> DecisionResponse:
         )
     
     try:
+        try:
+            memory_matches = decision_memory.find_relevant(
+                memory_scope=request.memory_scope,
+                problem_description=request.problem_description,
+                user_input=request.user_input,
+            )
+            memory_context = decision_memory.format_context(memory_matches)
+        except Exception:
+            logger.exception("Unable to retrieve decision memory")
+            memory_matches = []
+            memory_context = ""
+
         # Create initial state
         initial_state = State(
             problem_description=request.problem_description,
-            user_input=request.user_input
+            user_input=request.user_input,
+            memory_context=memory_context,
         )
         
         # Run graph
@@ -141,6 +167,25 @@ async def make_decision(request: DecisionRequest) -> DecisionResponse:
                 citizen_perspective="",
                 ethics_evaluation=""
             )
+
+        try:
+            decision_memory.store(
+                memory_scope=request.memory_scope,
+                problem_description=request.problem_description,
+                user_input=request.user_input,
+                final_decision=final_decision,
+                decision_reasoning=decision_reasoning,
+                final_confidence=final_confidence,
+                analyses={
+                    "climate": climate_text,
+                    "economy": economy_text,
+                    "health": health_text,
+                    "citizen": citizen_text,
+                    "ethics": ethics_text,
+                },
+            )
+        except Exception:
+            logger.exception("Unable to persist decision memory")
         
         return DecisionResponse(
             final_decision=final_decision,
@@ -150,7 +195,8 @@ async def make_decision(request: DecisionRequest) -> DecisionResponse:
             economy_analysis=economy_text,
             health_analysis=health_text,
             citizen_perspective=citizen_text,
-            ethics_evaluation=ethics_text
+            ethics_evaluation=ethics_text,
+            memory_matches=len(memory_matches),
         )
     except Exception as e:
         import traceback
@@ -159,5 +205,3 @@ async def make_decision(request: DecisionRequest) -> DecisionResponse:
             status_code=500,
             detail=f"Decision process failed: {str(e)}\n{error_trace}"
         )
-
-

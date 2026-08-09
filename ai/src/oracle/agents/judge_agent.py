@@ -34,7 +34,7 @@ class JudgeAgent:
         
         # Format all perspectives
         perspectives = self._format_perspectives(state)
-        problem = state.problem_description or state.user_input or "No problem specified"
+        problem = state.analysis_prompt
         
         try:
             prompt = self.prompt_template.format(
