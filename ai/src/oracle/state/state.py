@@ -21,6 +21,13 @@ class State(BaseModel):
     # Input
     user_input: str = ""
     problem_description: str = ""
+    memory_context: str = ""
+
+    @property
+    def analysis_prompt(self) -> str:
+        """Return the problem enriched with relevant historical decisions."""
+        problem = self.problem_description or self.user_input or "No input provided"
+        return f"{problem}\n\n{self.memory_context}" if self.memory_context else problem
     
     # Agent responses
     climate_analysis: Optional[AgentResponse] = None

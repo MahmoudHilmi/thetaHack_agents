@@ -24,7 +24,7 @@ class CitizenAgent:
 
     def run(self, state: State) -> dict[str, Any]:
         """Return citizen perspective analysis."""
-        problem = state.problem_description or state.user_input or "No input provided"
+        problem = state.analysis_prompt
         
         if not self.model:
             return {
@@ -63,5 +63,4 @@ class CitizenAgent:
                     confidence=0.0
                 )
             }
-
 

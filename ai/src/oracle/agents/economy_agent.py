@@ -24,7 +24,7 @@ class EconomyAgent:
 
     def run(self, state: State) -> dict[str, Any]:
         """Return economic impact analysis."""
-        problem = state.problem_description or state.user_input or "No input provided"
+        problem = state.analysis_prompt
         
         if not self.model:
             return {
@@ -63,5 +63,4 @@ class EconomyAgent:
                     confidence=0.0
                 )
             }
-
 

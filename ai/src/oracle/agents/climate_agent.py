@@ -24,7 +24,7 @@ class ClimateAgent:
 
     def run(self, state: State) -> dict[str, Any]:
         """Return a structured climate analysis response from the given state."""
-        problem = state.problem_description or state.user_input or "No input provided"
+        problem = state.analysis_prompt
         
         if not self.model:
             return {
@@ -63,6 +63,5 @@ class ClimateAgent:
                     confidence=0.0
                 )
             }
-
 
 

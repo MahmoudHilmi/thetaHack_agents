@@ -29,6 +29,8 @@ class Settings(BaseSettings):
     OPENAI_MODEL: str | None = None
     OPENROUTER_API_KEY: str | None = None
     OPENROUTER_MODEL: str | None = None
+    DECISION_MEMORY_DB_PATH: str = "ai/oracle_memory.sqlite3"
+    DECISION_MEMORY_DATABASE_URL: str | None = None
 
     class Config:
         env_file = os.path.join("ai", ".env")
@@ -36,6 +38,13 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+
+def get_decision_memory_database_url() -> str:
+    """Return the configured decision-memory database URL."""
+    if settings.DECISION_MEMORY_DATABASE_URL:
+        return settings.DECISION_MEMORY_DATABASE_URL
+    return f"sqlite:///{settings.DECISION_MEMORY_DB_PATH}"
 
 
 def get_chat_model(model: str, temperature: float = 0.7) -> Any:
