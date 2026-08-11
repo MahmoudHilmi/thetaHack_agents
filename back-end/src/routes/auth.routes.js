@@ -4,6 +4,7 @@ import { signUp, requestedFields } from '../controllers/auth/sign-up.js'
 import { Sign_in } from '../controllers/auth/log-in.js'
 import { verifyToken } from '../middlewares/verifyToken.middleware.js'
 import { verifyEmail } from '../controllers/auth/verify-email.js'
+import { logout } from '../controllers/auth/log-out.js'
 
 
 const authRouter = express.Router()
@@ -18,7 +19,7 @@ authRouter.post('/sign-in', Sign_in)
 authRouter.post('/verify-email', verifyToken("Theta-Hack-Auth"), verifyEmail)
 
 // log out
-// authRouter.post('/log-out', verifyToken("Theta-Hack-Auth"), logout)
+authRouter.post('/log-out', verifyToken("Theta-Hack-Auth"), logout)
 
 
 export default authRouter
