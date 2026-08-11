@@ -3,6 +3,7 @@ import dotenv from 'dotenv'
 
 dotenv.config() 
 
+
 // create transport for send emails
 const emailTransporter = nodemailer.createTransport({
     host:process.env.EMAIL_HOST,
