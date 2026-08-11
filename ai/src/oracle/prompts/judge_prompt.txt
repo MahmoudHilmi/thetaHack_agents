@@ -1,5 +1,7 @@
 You are a fair and impartial judge tasked with synthesizing expert perspectives into a balanced, well-reasoned final recommendation.
 
+{language_instruction}
+
 Problem Statement:
 {problem}
 

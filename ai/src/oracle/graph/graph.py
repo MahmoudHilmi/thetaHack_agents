@@ -5,7 +5,7 @@ through a graph workflow and finalizes with Judge Agent.
 """
 
 from typing import Any
-from langgraph.graph import StateGraph, END
+from langgraph.graph import START, END, StateGraph
 
 from oracle.agents.climate_agent import ClimateAgent
 from oracle.agents.economy_agent import EconomyAgent
@@ -86,25 +86,22 @@ def build_graph() -> StateGraph:
     graph.add_node("ethics", ethics_node)
     graph.add_node("judge", judge_node)
     
-    # Set entry point to run all domain agents first
-    graph.set_entry_point("climate")
-    
-    # Connect climate to other agents (parallel execution conceptually)
-    graph.add_edge("climate", "economy")
-    graph.add_edge("climate", "health")
-    graph.add_edge("climate", "citizen")
-    graph.add_edge("climate", "ethics")
-    
-    # All domain agents lead to judge
-    graph.add_edge("economy", "judge")
-    graph.add_edge("health", "judge")
-    graph.add_edge("citizen", "judge")
-    graph.add_edge("ethics", "judge")
+    # Start every domain agent at once, then wait for all five analyses before
+    # running the judge. This avoids making the request wait for a climate call
+    # before the other independent analyses begin.
+    graph.add_edge(START, "climate")
+    graph.add_edge(START, "economy")
+    graph.add_edge(START, "health")
+    graph.add_edge(START, "citizen")
+    graph.add_edge(START, "ethics")
+    graph.add_edge(
+        ["climate", "economy", "health", "citizen", "ethics"],
+        "judge",
+    )
     
     # Judge is the final node
     graph.add_edge("judge", END)
     
     return graph.compile()
-
 
 

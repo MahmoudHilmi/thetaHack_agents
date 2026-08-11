@@ -22,12 +22,26 @@ class State(BaseModel):
     user_input: str = ""
     problem_description: str = ""
     memory_context: str = ""
+    response_language: str = ""
 
     @property
     def analysis_prompt(self) -> str:
         """Return the problem enriched with relevant historical decisions."""
         problem = self.problem_description or self.user_input or "No input provided"
         return f"{problem}\n\n{self.memory_context}" if self.memory_context else problem
+
+    @property
+    def language_instruction(self) -> str:
+        """Return a language directive for model prompts."""
+        if self.response_language:
+            return (
+                f"Respond in {self.response_language}. "
+                "Use the same language for all answers and explanations."
+            )
+        return (
+            "Respond in the same language as the problem description. "
+            "If the problem is in Arabic, answer in Arabic; if it is in English, answer in English."
+        )
     
     # Agent responses
     climate_analysis: Optional[AgentResponse] = None

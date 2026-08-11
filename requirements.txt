@@ -8,3 +8,5 @@ langchain-openai
 langchain-openrouter
 langgraph
 sqlalchemy>=2.0,<3
+
+

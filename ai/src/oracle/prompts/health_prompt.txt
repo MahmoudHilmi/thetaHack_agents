@@ -2,6 +2,8 @@ You are a public health expert and medical analyst with deep knowledge of epidem
 
 Your role: Analyze the health impact of decisions.
 
+{language_instruction}
+
 Analyze the health impact of the following decision/problem:
 
 {problem}

@@ -18,6 +18,13 @@ class DecisionRequest(BaseModel):
         default="default", min_length=1, max_length=100,
         description="Isolation scope for prior decision memory",
     )
+    language: str = Field(
+        default="",
+        description=(
+            "Optional response language or language hint. "
+            "If omitted, ORACLE will attempt to match the language of the problem."
+        ),
+    )
 
 
 class DecisionResponse(BaseModel):
@@ -46,6 +53,8 @@ async def startup_event():
     try:
         decision_memory.initialize()
         graph = build_graph()
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception("Could not initialize ORACLE graph")
 
@@ -55,7 +64,10 @@ async def health() -> dict:
     """Health-check endpoint for production readiness monitoring."""
     return {
         "status": "ok",
-        "api_configured": bool(settings.OPENAI_API_KEY or settings.OPENROUTER_API_KEY),
+        "api_configured": bool(
+            settings.NVIDIA_API_KEY or settings.ZAI_API_KEY or settings.OPENAI_API_KEY
+            or settings.OPENROUTER_API_KEY
+        ),
         "graph_ready": graph is not None,
         "memory_ready": decision_memory.is_ready(),
     }
@@ -66,7 +78,10 @@ async def root() -> dict:
     return {
         "service": "ORACLE",
         "version": "0.1.0",
-        "ready": bool(settings.OPENAI_API_KEY or settings.OPENROUTER_API_KEY) and graph is not None
+        "ready": bool(
+            settings.NVIDIA_API_KEY or settings.ZAI_API_KEY or settings.OPENAI_API_KEY
+            or settings.OPENROUTER_API_KEY
+        ) and graph is not None
     }
 
 
@@ -78,10 +93,16 @@ async def make_decision(request: DecisionRequest) -> DecisionResponse:
     Runs all domain agents (Climate, Economy, Health, Citizen, Ethics)
     in parallel, then Judge Agent synthesizes into final decision.
     """
-    if not (settings.OPENAI_API_KEY or settings.OPENROUTER_API_KEY):
+    if not (
+        settings.NVIDIA_API_KEY or settings.ZAI_API_KEY or settings.OPENAI_API_KEY
+        or settings.OPENROUTER_API_KEY
+    ):
         raise HTTPException(
             status_code=503,
-            detail="OPENAI_API_KEY or OPENROUTER_API_KEY not configured"
+            detail=(
+                "NVIDIA_API_KEY, ZAI_API_KEY, OPENAI_API_KEY, or OPENROUTER_API_KEY "
+                "not configured"
+            )
         )
     
     if not graph:
@@ -108,6 +129,7 @@ async def make_decision(request: DecisionRequest) -> DecisionResponse:
             problem_description=request.problem_description,
             user_input=request.user_input,
             memory_context=memory_context,
+            response_language=request.language,
         )
         
         # Run graph
@@ -168,6 +190,16 @@ async def make_decision(request: DecisionRequest) -> DecisionResponse:
                 ethics_evaluation=""
             )
 
+        # Agents return provider exceptions as analysis text so one domain
+        # failure does not break a valid deliberation. If the judge itself
+        # failed, there is no decision to return or store as a success.
+        if str(final_decision).startswith("Error:"):
+            raise HTTPException(
+                status_code=502,
+                detail="The LLM provider could not complete the decision request. "
+                "Check the provider API key, balance, and rate limits.",
+            )
+
         try:
             decision_memory.store(
                 memory_scope=request.memory_scope,
@@ -198,6 +230,8 @@ async def make_decision(request: DecisionRequest) -> DecisionResponse:
             ethics_evaluation=ethics_text,
             memory_matches=len(memory_matches),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         import traceback
         error_trace = traceback.format_exc()

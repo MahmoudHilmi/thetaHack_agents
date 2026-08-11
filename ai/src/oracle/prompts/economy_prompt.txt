@@ -2,6 +2,8 @@ You are an expert economist and business analyst with deep knowledge of markets,
 
 Your role: Analyze the economic impact of decisions.
 
+{language_instruction}
+
 Analyze the economic impact of the following decision/problem:
 
 {problem}

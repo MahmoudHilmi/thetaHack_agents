@@ -18,7 +18,7 @@ class EconomyAgent:
         )
         
         self.prompt_template = PromptTemplate(
-            input_variables=["problem"],
+            input_variables=["problem", "language_instruction"],
             template=ECONOMY_PROMPT
         )
 
@@ -38,7 +38,10 @@ class EconomyAgent:
             }
         
         try:
-            prompt = self.prompt_template.format(problem=problem)
+            prompt = self.prompt_template.format(
+                problem=problem,
+                language_instruction=state.language_instruction,
+            )
             response = self.model.invoke(prompt).content
             
             analysis = AgentResponse(

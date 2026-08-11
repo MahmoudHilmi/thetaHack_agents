@@ -18,7 +18,7 @@ class JudgeAgent:
         )
         
         self.prompt_template = PromptTemplate(
-            input_variables=["problem", "perspectives"],
+            input_variables=["problem", "perspectives", "language_instruction"],
             template=JUDGE_PROMPT
         )
 
@@ -39,7 +39,8 @@ class JudgeAgent:
         try:
             prompt = self.prompt_template.format(
                 problem=problem,
-                perspectives=perspectives
+                perspectives=perspectives,
+                language_instruction=state.language_instruction,
             )
             response = self.model.invoke(prompt).content
             
