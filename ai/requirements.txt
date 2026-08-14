@@ -1,12 +1,19 @@
 fastapi
 uvicorn[standard]
+
 pydantic
 pydantic-settings
 python-dotenv
+
 langchain
+langchain-core
+langchain-community
 langchain-openai
 langchain-openrouter
 langgraph
+
 sqlalchemy>=2.0,<3
 
-
+httpx
+requests
+typing-extensions
