@@ -1,0 +1,2 @@
+[tool.vercel]
+entrypoint = "src.oracle.api.main:app"
