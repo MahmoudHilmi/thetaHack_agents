@@ -1,2 +1,25 @@
+[project]
+name = "oracle"
+version = "0.1.0"
+description = "Oracle AI Decision Engine"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+    "pydantic",
+    "pydantic-settings",
+    "python-dotenv",
+    "langchain",
+    "langchain-core",
+    "langchain-community",
+    "langchain-openai",
+    "langchain-openrouter",
+    "langgraph",
+    "sqlalchemy>=2.0,<3",
+    "httpx",
+    "requests",
+    "typing-extensions",
+]
+
 [tool.vercel]
 entrypoint = "src.oracle.api.main:app"
