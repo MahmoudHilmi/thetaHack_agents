@@ -36,7 +36,7 @@ class Settings(BaseSettings):
     OPENROUTER_API_KEY: str | None = None
     OPENROUTER_MODEL: str | None = None
     LLM_TIMEOUT_SECONDS: int = 30
-    DECISION_MEMORY_DB_PATH: str = "ai/oracle_memory.sqlite3"
+    DECISION_MEMORY_DB_PATH: str = "/tmp/oracle_memory.sqlite3"
     DECISION_MEMORY_DATABASE_URL: str | None = None
 
     class Config:
